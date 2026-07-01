@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Soft Upload — Fourth World</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%; min-height: 100vh;
+      background: #070e09; color: #5eead4;
+      font-family: 'Courier New', monospace;
+      overflow-x: hidden; touch-action: manipulation;
+    }
+    .particle {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 50;
+      animation: sparkle 3s ease-in-out infinite;
+    }
+    .bubble {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      animation: rise 8s ease-in-out infinite;
+    }
+    .petal { position: absolute; pointer-events: none; animation: drift 14s ease-in-out infinite; }
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0.2); }
+      50%       { opacity: 1; transform: scale(1); }
+    }
+    @keyframes rise {
+      0%   { opacity: 0;    transform: translateY(0)     scale(0.5); }
+      15%  { opacity: 0.85; }
+      85%  { opacity: 0.5;  }
+      100% { opacity: 0;    transform: translateY(-85vh) scale(1); }
+    }
+    @keyframes drift {
+      0%   { opacity: 0;   transform: translate(0, 0)        rotate(0deg); }
+      15%  { opacity: 0.6; }
+      85%  { opacity: 0.3; }
+      100% { opacity: 0;   transform: translate(25px, -55vh) rotate(150deg); }
+    }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+    .hint-fade {
+      opacity: 0;
+      animation: fadein 1s ease-in 1.2s forwards;
+      color: #9ca3af; font-size: 1rem; letter-spacing: .12em;
+      text-align: center; margin-top: 2.5rem;
+    }
+    .intro-text {
+      max-width: 600px; width: 100%; text-align: center; padding: 0 2rem;
+    }
+
+    .screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      position: relative; padding: 2rem 1rem;
+    }
+    .card {
+      width: 100%; max-width: 640px; position: relative;
+      border: 2px solid; padding: 2.5rem;
+      border-radius: 50% 50% 0 0 / 10% 10% 0 0;
+    }
+    .card-teal  { border-color: #34d399; box-shadow: 0 0 18px rgba(94,234,212,0.3), 0 0 50px rgba(94,234,212,0.1); }
+    .card-amber { border-color: #fbbf24; box-shadow: 0 0 18px rgba(251,191,36,0.3),  0 0 50px rgba(251,191,36,0.1); }
+    .shell { position: absolute; top: 7rem; opacity: 0.85; pointer-events: none; }
+    .shell-left  { left: -9.5rem; transform: scaleX(-1) rotate(30deg);  transform-origin: 150px 335px; }
+    .shell-right { right: -9.5rem; transform: scaleX(-1) rotate(-30deg); transform-origin: 150px 335px; }
+    .label    { color: #fbbf24; font-size: 1.1rem; letter-spacing: .25em; text-align: center; margin-bottom: 2rem; }
+    .heading  { color: #6ee7b7; font-size: 1.6rem; line-height: 1.5; margin-bottom: 1.5rem; text-align: center; font-weight: bold; }
+    .body     { color: #6ee7b7; font-size: 1.1rem; line-height: 1.7; margin-bottom: 1.5rem; }
+    .muted    { color: #4b5563; font-size: 0.85rem; text-align: center; margin-top: 0.75rem; }
+    .divider  { border: none; border-top: 1px solid #134e4a; margin: 1.5rem 0; }
+    .section-label { color: #a78bfa; font-size: 0.8rem; letter-spacing: .2em; margin-bottom: 0.75rem; }
+    .amber-text    { color: #fcd34d; font-size: 1.1rem; line-height: 1.7; }
+    .teal-light    { color: #5eead4; font-size: 1rem; line-height: 1.7; font-style: italic; }
+    .counter  { color: #1f6b5e; font-size: 0.85rem; letter-spacing: .2em; text-align: center; margin-bottom: 1.5rem; }
+    .intro-body { color: #8b5cf6; font-size: 1rem; line-height: 1.6; margin-bottom: 1rem; }
+    .disclaimer { color: #374151; font-size: 0.8rem; line-height: 1.5; font-style: italic; margin-bottom: 2rem; }
+    .btn {
+      width: 100%; border: 2px solid; padding: 1.25rem 1rem;
+      font-family: 'Courier New', monospace; font-size: 1.1rem; font-weight: bold;
+      letter-spacing: .2em; cursor: pointer; transition: background .2s; background: transparent;
+    }
+    .btn-teal  { border-color: #2dd4bf; color: #fbbf24; }
+    .btn-teal:hover  { background: rgba(45,212,191,0.12); }
+    .btn-teal:active { background: rgba(45,212,191,0.22); }
+    .btn-amber { border-color: #fbbf24; color: #fbbf24; }
+    .btn-amber:hover  { background: rgba(251,191,36,0.12); }
+    .btn-amber:active { background: rgba(251,191,36,0.22); }
+    .btn:disabled { opacity: 0.3; cursor: default; }
+    textarea {
+      width: 100%; background: #070e09; border: 2px solid #2dd4bf;
+      padding: 1.25rem; color: #6ee7b7; font-family: 'Courier New', monospace;
+      font-size: 1.1rem; resize: none; outline: none;
+      transition: border-color .2s; margin-bottom: 1.5rem;
+    }
+    textarea:focus { border-color: #fbbf24; }
+    textarea::placeholder { color: #312e81; }
+    .spinner { font-size: 3rem; color: #34d399; animation: pulse 2s ease-in-out infinite; text-align: center; }
+    .process-label { color: #6ee7b7; font-size: 1.5rem; letter-spacing: .2em; text-align: center; margin: 1rem 0 0.5rem; }
+    .process-sub   { color: #1f6b5e; font-size: 0.9rem; letter-spacing: .15em; text-align: center; }
+    .result-card { max-height: 96vh; overflow-y: auto; padding: 2.5rem 2.5rem 2rem; }
+    .fountain {
+      position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 75%; height: 40%; pointer-events: none;
+      background: radial-gradient(ellipse at bottom center, rgba(94,234,212,0.13) 0%, rgba(94,234,212,0.06) 40%, transparent 70%);
+    }
+    /* Sync status pill — only visible when online and unsynced sessions exist */
+    #sync-banner {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: #134e4a; border: 1px solid #2dd4bf; color: #6ee7b7;
+      font-size: 0.72rem; letter-spacing: .1em; padding: 0.4rem 0.9rem;
+      border-radius: 999px; z-index: 100; display: none; cursor: pointer;
+    }
+    #sync-banner.visible { display: block; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div id="sparkles"></div>
+<div id="sync-banner" onclick="syncNow()">✦ TAP TO SYNC ANSWERS TO SERVER ✦</div>
+
+<!-- INTRO -->
+<div id="screen-intro" class="screen" onclick="nextIntroPage()" style="cursor:pointer; flex-direction:column;">
+  <div class="fountain"></div>
+  <div id="bubbles-intro"></div>
+  <div id="intro-content" class="intro-text"></div>
+</div>
+
+<!-- QUESTIONS -->
+<div id="screen-questions" class="screen hidden">
+  <div class="fountain"></div>
+  <div id="bubbles-questions"></div>
+  <div class="card card-teal">
+    <div class="shell shell-left"><svg width="300" height="350" viewBox="0 0 60 70"><path d="M 30 67 L 0 16 Q 30 -6 60 16 Z" fill="rgba(52,211,153,0.08)"/><path d="M 0 16 Q 30 -6 60 16" fill="none" stroke="rgba(52,211,153,0.95)" stroke-width="2"/><line x1="30" y1="67" x2="0"  y2="16" stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><line x1="30" y1="67" x2="7"  y2="12" stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><line x1="30" y1="67" x2="15" y2="9"  stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><line x1="30" y1="67" x2="30" y2="7"  stroke="rgba(52,211,153,0.9)"  stroke-width="0.6"/><line x1="30" y1="67" x2="45" y2="9"  stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><line x1="30" y1="67" x2="53" y2="12" stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><line x1="30" y1="67" x2="60" y2="16" stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><circle cx="30" cy="67" r="1.2" fill="rgba(52,211,153,0.75)"/></svg></div>
+    <div class="shell shell-right"><svg width="300" height="350" viewBox="0 0 60 70"><path d="M 30 67 L 0 16 Q 30 -6 60 16 Z" fill="rgba(52,211,153,0.08)"/><path d="M 0 16 Q 30 -6 60 16" fill="none" stroke="rgba(52,211,153,0.95)" stroke-width="2"/><line x1="30" y1="67" x2="0"  y2="16" stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><line x1="30" y1="67" x2="7"  y2="12" stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><line x1="30" y1="67" x2="15" y2="9"  stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><line x1="30" y1="67" x2="30" y2="7"  stroke="rgba(52,211,153,0.9)"  stroke-width="0.6"/><line x1="30" y1="67" x2="45" y2="9"  stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><line x1="30" y1="67" x2="53" y2="12" stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><line x1="30" y1="67" x2="60" y2="16" stroke="rgba(52,211,153,0.65)" stroke-width="0.5"/><circle cx="30" cy="67" r="1.2" fill="rgba(52,211,153,0.75)"/></svg></div>
+    <div class="counter" id="q-counter">✦ 1 / 3 ✦</div>
+    <h2 class="heading" id="q-text"></h2>
+    <textarea id="q-input" rows="5" placeholder="Speak from the soul..."></textarea>
+    <button class="btn btn-teal" id="q-next-btn" onclick="nextQuestion()" disabled>✧ NEXT ✧</button>
+    <p class="muted">(enter to proceed)</p>
+  </div>
+</div>
+
+<!-- PROCESSING -->
+<div id="screen-processing" class="screen hidden">
+  <div class="fountain"></div>
+  <div>
+    <div class="spinner">✦</div>
+    <p class="process-label">weaving your ritual</p>
+    <p class="process-sub">the spirits are listening...</p>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="screen-result" class="screen hidden">
+  <div class="fountain"></div>
+  <div id="bubbles-result"></div>
+  <div class="card card-amber">
+    <div id="result-content"></div>
+  </div>
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────
+// Set this to your Railway server URL before deploying
+const BACKEND_URL = 'http://localhost:8767';
+
+const STORAGE_FRAGMENTS = 'fw_fragments';
+const STORAGE_SESSIONS  = 'fw_sessions';
+
+const QUESTIONS = [
+  "Why are you here tonight, and what do you wish to transform?",
+  "Is there something you are ready to release?",
+  "What would you like to bring to deepen and enrich this community?"
+];
+
+const FESTIVAL_ACTIONS = [
+  "Find someone you haven't spoken to tonight and ask them what brought them here. Listen without thinking about what you'll say next.",
+  "Let yourself be moved by one song tonight — close your eyes and let it find the part of you that needs it most.",
+  "Before the night ends, give someone a specific and genuine compliment. Not 'you look great' — something true that only you noticed.",
+  "Find a moment to stand still and feel your feet on the ground. Notice who is around you and let yourself belong.",
+  "Let yourself receive tonight. If someone offers you kindness, don't deflect it — just say thank you and let it land.",
+  "Find someone who looks like they're at the edges of the room and invite them deeper in.",
+  "Tell someone something kind you've been holding back — something you thought but didn't say.",
+  "When you feel the urge to disappear or check your phone, stay instead. Notice what happens.",
+  "Let the music make a decision for you. When a song moves you, let your body follow without negotiating.",
+  "Before you leave, find one person and tell them one thing you want to carry home from this night.",
+  "Ask someone what they are releasing tonight. Share what you are releasing too.",
+  "Find a quiet moment and breathe slowly. You are allowed to be here. You already belong.",
+  "Let yourself be seen doing something joyful — dancing, laughing, singing. Don't hide it.",
+  "Thank someone tonight who you might normally walk past without acknowledging.",
+  "Find one stranger and stay present with them through a whole song. No phones, no looking away.",
+  "Notice how your body is accustomed to moving. Try dancing with the music in new ways. Discover new languages of movement using your fingers, arms, neck, hips, and legs.",
+  "Invite someone you don't know into the installation. After they've entered their answers, compare the results. What feels familiar? What seems new?",
+  "Find a quiet moment and meditate on someone who is not here with you tonight. Imagine them in the space with you, and conjure their energy. Let it wash over you.",
+  "If you arrived with someone tonight, thank them for joining you and share something you appreciate about them. If you arrived solo, acknowledge the beauty in giving yourself this night of pleasure and adventure.",
+  "Acknowledge the different flavors of your own desires. Are they mental, emotional, physical? Pay deep attention to the origins of those desires as you move through the night.",
+  "Ask for someone's consent to dance next to them for the duration of a song.",
+  "As you meet new people tonight, ask them for a story about the origins of their name or hometown.",
+  "Try to remember one of your most ecstatic memories shared in a community or group setting. What made it so special? What does it mean to you now?",
+  "Ask others tonight about what makes nightlife spaces special. What would make them feel safer and even more supported? What would make it more joyful?",
+  "Ask a stranger about their rituals related to joy. Share one of your own.",
+  "When you get home tonight, take a refreshing shower and recount all the things that made this night unique.",
+  "Write down a list of things that you wish to release this summer. Write down a list of things you wish to create.",
+];
+
+const RITUAL_TEMPLATES = [
+  (w, r, c) =>
+    `You arrived carrying something real: ${w}. That instinct to name it and come here was right.\n\nTonight, as you release ${r}, notice how the space that remains is exactly the shape of what you are becoming.\n\nThe ${c} you are calling into being is already forming around you — in the music, in the people, in the air between you.`,
+  (w, r, c) =>
+    `Something in you recognised this night before you arrived. You came because of ${w}, and that was an act of courage.\n\nWhat you are ready to release — ${r} — does not have to leave alone. Let the night carry it with you.\n\nAnd what you wish to bring — ${c} — is needed here, even if you cannot yet see where it lands.`,
+  (w, r, c) =>
+    `You are not the first person to stand where you are tonight. Others have wanted to transform ${w}, have carried ${r} and set it down, have dreamed of ${c}.\n\nTonight you join that line. Let yourself be held by what came before, and let yourself become what comes next.`,
+  (w, r, c) =>
+    `Your body knew why you were coming before you found the words. You named it: ${w}. Trust that.\n\nThe releasing of ${r} doesn't have to happen all at once — it can happen in layers, over the course of a single song.\n\nWhat you wish to bring or preserve — ${c} — begins with your presence here, right now, in this room.`,
+  (w, r, c) =>
+    `You have permission tonight. Permission to transform ${w}.\n\nPermission to set down ${r} without guilt or ceremony.\n\nPermission to offer what you named — ${c} — without waiting until you feel ready. The circle is open. Walk in.`,
+  (w, r, c) =>
+    `This night was made for ${w}. All the hours that led to this moment were pointing here.\n\nWhat you release — ${r} — leaves a clearing. In that clearing, ${c} can take root.\n\nLet tonight water it.`,
+  (w, r, c) =>
+    `Every person in this room arrived with something. You arrived with ${w}.\n\nSomeone else arrived with their own version of ${r}, and they are setting it down too, right now, somewhere in this crowd.\n\nWhat you wish to preserve — ${c} — is already being woven into this gathering, thread by thread, person by person, song by song.`,
+  (w, r, c) =>
+    `The desire to transform ${w} has been with you longer than tonight. It brought you here.\n\nAs you release ${r}, something returns that was always yours.\n\nAnd the ${c} you are calling in? It starts with you, here, in this moment, exactly as you are.`,
+];
+
+const SEED_FRAGMENTS = [
+  "I came looking for something I couldn't name",
+  "to remember what community feels like in my body",
+  "the way strangers can become kin",
+  "I arrived carrying grief and looking for somewhere to set it down",
+  "to be witnessed and to witness others",
+  "something that won't last and matters anyway",
+  "the feeling of belonging before you've earned it",
+  "to awaken my body and heal my mind",
+  "witnessing the beauty in others without wanting to own it",
+  "a vibe that needs to be absorbed and shared",
+  "releasing doubt and welcoming change",
+  "knowing how to flow into unexpected circumstances",
+  "realizing I’ve survived hardships and can help others",
+  "giving myself permission to let go and change",
+];
+
+// ── Local logic ──────────────────────────────────────────────────────────
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function extractFragment(why, community) {
+  const text = (why + ' ' + community).trim();
+  const sentences = text.split(/[.,!?]+/).map(s => s.trim()).filter(s => s.length > 10);
+  const short = sentences.filter(s => s.split(' ').length <= 15);
+  const pool  = short.length ? short : sentences;
+  if (!pool.length) return text.split(' ').slice(0, 10).join(' ');
+  return pick(pool).split(' ').slice(0, 15).join(' ').toLowerCase();
+}
+
+function getFragmentPool() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_FRAGMENTS) || '[]');
+    return stored.length ? stored : [...SEED_FRAGMENTS];
+  } catch { return [...SEED_FRAGMENTS]; }
+}
+
+function saveFragment(frag) {
+  try {
+    const pool = JSON.parse(localStorage.getItem(STORAGE_FRAGMENTS) || '[]');
+    pool.push(frag);
+    localStorage.setItem(STORAGE_FRAGMENTS, JSON.stringify(pool));
+  } catch {}
+}
+
+function saveSession(answers, ritual, action, fragment, returned) {
+  try {
+    const sessions = JSON.parse(localStorage.getItem(STORAGE_SESSIONS) || '[]');
+    sessions.push({
+      synced:                false,   // flipped to true after successful POST
+      timestamp:             new Date().toISOString(),
+      why_are_you_here:      answers[0],
+      self_transformation:   answers[1],
+      sustainable_community: answers[2],
+      ritual_text:           ritual,
+      festival_action:       action,
+      public_fragment:       fragment,
+      returned_fragment:     returned,
+    });
+    localStorage.setItem(STORAGE_SESSIONS, JSON.stringify(sessions));
+  } catch {}
+}
+
+function generateResult(answers) {
+  const why       = answers[0] || 'an open question';
+  const release   = answers[1] || 'what no longer serves you';
+  const community = answers[2] || 'a world worth building';
+  const template        = pick(RITUAL_TEMPLATES);
+  const ritual_text     = template(why, release, community);
+  const festival_action = pick(FESTIVAL_ACTIONS);
+  const pool              = getFragmentPool();
+  const returned_fragment = pick(pool);
+  const public_fragment   = extractFragment(why, community);
+  saveFragment(public_fragment);
+  saveSession(answers, ritual_text, festival_action, public_fragment, returned_fragment);
+  return { ritual_text, festival_action, returned_fragment };
+}
+
+// ── Sync ─────────────────────────────────────────────────────────────────
+function getUnsyncedCount() {
+  try {
+    const sessions = JSON.parse(localStorage.getItem(STORAGE_SESSIONS) || '[]');
+    return sessions.filter(s => !s.synced).length;
+  } catch { return 0; }
+}
+
+function markSynced(count) {
+  try {
+    const sessions = JSON.parse(localStorage.getItem(STORAGE_SESSIONS) || '[]');
+    let n = 0;
+    sessions.forEach(s => { if (!s.synced && n < count) { s.synced = true; n++; } });
+    localStorage.setItem(STORAGE_SESSIONS, JSON.stringify(sessions));
+  } catch {}
+}
+
+async function syncNow() {
+  const sessions = JSON.parse(localStorage.getItem(STORAGE_SESSIONS) || '[]');
+  const unsynced = sessions.filter(s => !s.synced);
+  if (!unsynced.length) { updateSyncBanner(); return; }
+
+  const banner = document.getElementById('sync-banner');
+  banner.textContent = `✦ SYNCING ${unsynced.length} SESSIONS… ✦`;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/batch-sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessions: unsynced }),
+    });
+    if (res.ok) {
+      markSynced(unsynced.length);
+      banner.textContent = '✦ ALL SYNCED ✦';
+      setTimeout(updateSyncBanner, 3000);
+    } else {
+      banner.textContent = '✦ SYNC FAILED — WILL RETRY ✦';
+      setTimeout(updateSyncBanner, 3000);
+    }
+  } catch {
+    banner.textContent = '✦ SYNC FAILED — SERVER UNREACHABLE ✦';
+    setTimeout(updateSyncBanner, 3000);
+  }
+}
+
+function updateSyncBanner() {
+  const banner = document.getElementById('sync-banner');
+  const n = getUnsyncedCount();
+  if (navigator.onLine && n > 0) {
+    banner.textContent = `✦ ${n} SESSION${n === 1 ? '' : 'S'} READY TO SYNC — TAP ✦`;
+    banner.classList.add('visible');
+  } else {
+    banner.classList.remove('visible');
+  }
+}
+
+window.addEventListener('online',  () => { updateSyncBanner(); if (getUnsyncedCount() > 0) syncNow(); });
+window.addEventListener('offline', updateSyncBanner);
+
+// ── Intro pages ───────────────────────────────────────────────────────────
+const INTRO_PAGES = [
+  () => `
+    <div style="color:#fbbf24;font-size:1rem;letter-spacing:.25em;margin-bottom:2rem;">✧ SOFT UPLOAD ✧</div>
+    <h1 style="color:#6ee7b7;font-size:1.9rem;line-height:1.7;font-weight:normal;">As we gather in ecstatic spaces, each encounter is a moment to reflect those that have come before and those that are yet to be.</h1>
+    <p class="hint-fade">(tap to continue)</p>`,
+
+  () => `
+    <p style="color:#a78bfa;font-style:italic;font-size:2rem;line-height:1.7;">Within these walls we create a collective spell.</p>
+    <p class="hint-fade">(tap to continue)</p>`,
+
+  () => `
+    <p style="color:#8b5cf6;font-size:1.6rem;line-height:1.9;">As part of your presence here tonight, we invite you to consider your intentions as you answer three questions. You will receive a personalized ritual to carry with you.</p>
+    <p class="hint-fade">(tap to continue)</p>`,
+
+  () => `
+    <p style="color:#4b5563;font-size:1.5rem;line-height:1.9;font-style:italic;">Your words may be woven anonymously into a collective archive. Please avoid entering personal or identifying information.</p>
+    <p class="hint-fade">(tap to enter)</p>`,
+];
+
+let introPage = 0;
+
+function renderIntroPage() {
+  const el = document.getElementById('intro-content');
+  el.innerHTML = INTRO_PAGES[introPage]();
+  // Force animation restart on the hint element
+  const hint = el.querySelector('.hint-fade');
+  if (hint) { hint.style.animation = 'none'; hint.offsetHeight; hint.style.animation = ''; }
+}
+
+function nextIntroPage() {
+  introPage++;
+  if (introPage < INTRO_PAGES.length) {
+    renderIntroPage();
+  } else {
+    startQuestions();
+  }
+}
+
+// ── App state ─────────────────────────────────────────────────────────────
+let currentQuestion = 0;
+const answers = ['', '', ''];
+
+function show(id) {
+  ['intro','questions','processing','result'].forEach(s => {
+    document.getElementById('screen-' + s).classList.toggle('hidden', s !== id);
+  });
+  if (id === 'intro') { introPage = 0; renderIntroPage(); }
+}
+
+function startQuestions() {
+  currentQuestion = 0;
+  answers[0] = answers[1] = answers[2] = '';
+  renderQuestion();
+  show('questions');
+  setTimeout(() => { const ta = document.getElementById('q-input'); ta.value = ''; ta.focus(); }, 50);
+}
+
+function renderQuestion() {
+  document.getElementById('q-counter').textContent = `✦ ${currentQuestion + 1} / ${QUESTIONS.length} ✦`;
+  document.getElementById('q-text').textContent = QUESTIONS[currentQuestion];
+  const btn = document.getElementById('q-next-btn');
+  btn.textContent = currentQuestion < QUESTIONS.length - 1 ? '✧ NEXT ✧' : '✧ COMPLETE THE SPELL ✧';
+  btn.disabled = true;
+}
+
+function nextQuestion() {
+  const ta  = document.getElementById('q-input');
+  const val = ta.value.trim();
+  if (!val) return;
+  answers[currentQuestion] = val;
+  if (currentQuestion < QUESTIONS.length - 1) {
+    currentQuestion++;
+    renderQuestion();
+    ta.value = '';
+    ta.focus();
+  } else {
+    show('processing');
+    setTimeout(() => { showResult(generateResult(answers)); }, 2500);
+  }
+}
+
+// ── Result pages ──────────────────────────────────────────────────────────
+let resultData = null;
+let resultPage = 0;
+
+function buildResultPages(result) {
+  const ritualParas = result.ritual_text.split('\n\n')
+    .filter(p => p.trim())
+    .map(p => `<p style="color:#6ee7b7;font-size:1.15rem;line-height:1.8;margin-bottom:1.2rem;">${p.trim()}</p>`)
+    .join('');
+
+  return [
+    () => `
+      <div class="label">✧ YOUR RITUAL ✧</div>
+      ${ritualParas}
+      <button class="btn btn-amber" style="margin-top:1rem;" onclick="nextResultPage()">✧ CONTINUE ✧</button>
+      <p class="muted">(tap to proceed)</p>`,
+
+    () => `
+      <p class="section-label" style="margin-bottom:1rem;">✦ YOUR INVITATION TONIGHT</p>
+      <p class="amber-text" style="font-size:1.2rem;line-height:1.8;margin-bottom:2rem;">${result.festival_action}</p>
+      <button class="btn btn-amber" onclick="nextResultPage()">✧ CONTINUE ✧</button>
+      <p class="muted">(tap to proceed)</p>`,
+
+    () => `
+      <p class="section-label" style="margin-bottom:1rem;">✦ FROM THE COLLECTIVE</p>
+      <p class="teal-light" style="font-size:1.2rem;line-height:1.8;margin-bottom:2.5rem;">"${result.returned_fragment || ''}"</p>
+      <hr class="divider">
+      <button class="btn btn-amber" onclick="resetAll()">✧ RETURN TO THE CIRCLE ✧</button>
+      <p class="muted">(tap to proceed)</p>`,
+  ];
+}
+
+let RESULT_PAGES = [];
+
+function renderResultPage() {
+  document.getElementById('result-content').innerHTML = RESULT_PAGES[resultPage]();
+}
+
+function nextResultPage() {
+  resultPage++;
+  if (resultPage < RESULT_PAGES.length) {
+    renderResultPage();
+  } else {
+    resetAll();
+  }
+}
+
+function showResult(result) {
+  resultData  = result;
+  resultPage  = 0;
+  RESULT_PAGES = buildResultPages(result);
+  show('result');
+  renderResultPage();
+}
+
+function resetAll() { show('intro'); }
+
+document.getElementById('q-input').addEventListener('input', function() {
+  document.getElementById('q-next-btn').disabled = !this.value.trim();
+});
+document.getElementById('q-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (this.value.trim()) nextQuestion(); }
+});
+document.addEventListener('keyup', function(e) {
+  if (e.key !== 'Enter') return;
+  if (!document.getElementById('screen-intro').classList.contains('hidden'))  nextIntroPage();
+  if (!document.getElementById('screen-result').classList.contains('hidden')) nextResultPage();
+});
+
+// ── Particles ────────────────────────────────────────────────────────────
+function makeBubbles(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  [
+    { left:'4%',  size:10, dur:7.0, delay:0,   color:'rgba(94,234,212,0.6)' },
+    { left:'9%',  size:7,  dur:8.5, delay:1.6, color:'rgba(167,139,250,0.55)' },
+    { left:'14%', size:12, dur:6.5, delay:3.2, color:'rgba(110,231,183,0.6)' },
+    { left:'7%',  size:8,  dur:9.0, delay:0.8, color:'rgba(251,191,36,0.5)' },
+    { left:'18%', size:10, dur:7.5, delay:2.4, color:'rgba(94,234,212,0.5)' },
+    { left:'87%', size:10, dur:7.0, delay:0.4, color:'rgba(110,231,183,0.6)' },
+    { left:'92%', size:7,  dur:8.0, delay:2.0, color:'rgba(94,234,212,0.55)' },
+    { left:'96%', size:12, dur:6.5, delay:1.0, color:'rgba(167,139,250,0.5)' },
+    { left:'83%', size:8,  dur:9.5, delay:3.5, color:'rgba(251,191,36,0.5)' },
+    { left:'89%', size:10, dur:7.5, delay:2.8, color:'rgba(110,231,183,0.55)' },
+  ].forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'bubble';
+    div.style.cssText = `left:${c.left};bottom:0;width:${c.size}px;height:${c.size}px;background:${c.color};animation-duration:${c.dur}s;animation-delay:${c.delay}s;`;
+    el.appendChild(div);
+  });
+  [
+    { left:'6%',  bottom:'25%', dur:13, delay:0,   char:'✿', color:'rgba(110,231,183,0.5)', size:'2rem' },
+    { left:'16%', bottom:'35%', dur:16, delay:3.5, char:'❀', color:'rgba(167,139,250,0.45)', size:'1.6rem' },
+    { left:'82%', bottom:'20%', dur:14, delay:1.2, char:'✿', color:'rgba(94,234,212,0.5)',   size:'1.8rem' },
+    { left:'91%', bottom:'30%', dur:11, delay:4.2, char:'❀', color:'rgba(251,191,36,0.45)',  size:'1.7rem' },
+    { left:'48%', bottom:'8%',  dur:15, delay:2.0, char:'✿', color:'rgba(110,231,183,0.4)',  size:'1.5rem' },
+  ].forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'petal';
+    div.textContent = p.char;
+    div.style.cssText = `left:${p.left};bottom:${p.bottom};color:${p.color};font-size:${p.size};animation-duration:${p.dur}s;animation-delay:${p.delay}s;`;
+    el.appendChild(div);
+  });
+}
+
+(function makeSparkles() {
+  const container = document.getElementById('sparkles');
+  const colors = ['rgba(94,234,212,0.9)','rgba(110,231,183,0.9)','rgba(251,191,36,0.85)','rgba(167,139,250,0.85)'];
+  [
+    { top:'5%',  left:'8%',  size:6,  dur:2.3, delay:0   },
+    { top:'12%', left:'85%', size:9,  dur:3.1, delay:0.5 },
+    { top:'20%', left:'55%', size:6,  dur:2.7, delay:1.1 },
+    { top:'32%', left:'22%', size:9,  dur:3.5, delay:0.3 },
+    { top:'45%', left:'5%',  size:12, dur:4.0, delay:0.9 },
+    { top:'58%', left:'38%', size:9,  dur:3.2, delay:0.6 },
+    { top:'70%', left:'80%', size:9,  dur:3.7, delay:0.2 },
+    { top:'85%', left:'30%', size:9,  dur:3.0, delay:0.8 },
+    { top:'90%', left:'65%', size:6,  dur:2.6, delay:1.5 },
+  ].forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'particle';
+    div.style.cssText = `top:${c.top};left:${c.left};width:${c.size}px;height:${c.size}px;background:${colors[i%colors.length]};animation-duration:${c.dur}s;animation-delay:${c.delay}s;`;
+    container.appendChild(div);
+  });
+})();
+
+makeBubbles('bubbles-intro');
+makeBubbles('bubbles-questions');
+makeBubbles('bubbles-result');
+
+// ── Service worker ────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// Check sync status on load
+updateSyncBanner();
+renderIntroPage();
+</script>
+</body>
+</html>
