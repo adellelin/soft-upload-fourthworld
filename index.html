@@ -293,9 +293,6 @@ async function generateResult(answers) {
   const template        = pick(RITUAL_TEMPLATES);
   const ritual_text     = template(why, release, community);
   const festival_action = pick(FESTIVAL_ACTIONS);
-  const public_fragment = extractFragment(why, community);
-  saveFragment(public_fragment);
-
   let returned_fragment;
   if (navigator.onLine) {
     try {
@@ -310,6 +307,9 @@ async function generateResult(answers) {
   if (!returned_fragment) {
     returned_fragment = pick(getFragmentPool());
   }
+
+  const public_fragment = extractFragment(why, community);
+  saveFragment(public_fragment);
 
   saveSession(answers, ritual_text, festival_action, public_fragment, returned_fragment);
   return { ritual_text, festival_action, returned_fragment };
