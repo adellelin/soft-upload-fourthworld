@@ -246,7 +246,7 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function extractFragment(why, community) {
   const whyPhrase  = why.split(/[.,!?]+/)[0].trim().toLowerCase();
   const commPhrase = community.split(/[.,!?]+/)[0].trim().toLowerCase();
-  if (whyPhrase && commPhrase) return `${whyPhrase} — ${commPhrase}`;
+  if (whyPhrase && commPhrase) return `${whyPhrase}, ${commPhrase}`;
   return (whyPhrase || commPhrase || (why + ' ' + community).trim().toLowerCase());
 }
 
