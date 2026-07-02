@@ -55,14 +55,14 @@ def extract_fragment(answers):
         f"Two responses from a participant at a community gathering:\n\n"
         f"Why they are here: \"{why}\"\n"
         f"What they wish to preserve: \"{community}\"\n\n"
-        "Extract ONE short fragment (5–15 words) from either response that:\n"
-        "- Comes directly from their words, not invented\n"
-        "- Is the most resonant or unexpected phrase\n"
+        "Extract ONE sentence from either response that:\n"
+        "- Comes directly from their words, not invented or paraphrased\n"
+        "- Is the most resonant or unexpected sentence\n"
         "- Could float alone and still carry meaning\n"
-        "Return ONLY the fragment, no explanation, no punctuation at the end."
+        "Return ONLY the sentence, exactly as written, no explanation."
     )
     try:
-        return claude_call(prompt, max_tokens=50)
+        return claude_call(prompt, max_tokens=150)
     except Exception as e:
         print(f"Fragment extraction error: {e}")
         return ''

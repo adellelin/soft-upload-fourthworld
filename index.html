@@ -249,7 +249,7 @@ function extractFragment(why, community) {
   const short = sentences.filter(s => s.split(' ').length <= 15);
   const pool  = short.length ? short : sentences;
   if (!pool.length) return text.split(' ').slice(0, 10).join(' ');
-  return pick(pool).split(' ').slice(0, 15).join(' ').toLowerCase();
+  return pick(pool).toLowerCase();
 }
 
 function getFragmentPool() {
