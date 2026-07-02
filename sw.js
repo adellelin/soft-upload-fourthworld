@@ -1,4 +1,4 @@
-const CACHE = 'fw-v2';
+const CACHE = 'fw-v3';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -15,6 +15,7 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
