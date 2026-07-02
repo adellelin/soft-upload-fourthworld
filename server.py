@@ -132,6 +132,10 @@ def process_batch(sessions):
 class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
+        if self.path == '/fragment':
+            fragment = get_returned_fragment()
+            self._json(200, {'fragment': fragment})
+            return
         static_exts = ('.html', '.js', '.css', '.ico', '.png')
         if any(self.path.endswith(e) for e in static_exts) or self.path == '/':
             filename  = 'index.html' if self.path == '/' else self.path.lstrip('/')
