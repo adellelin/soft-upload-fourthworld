@@ -55,11 +55,10 @@ def extract_fragment(answers):
         f"Two responses from a participant at a community gathering:\n\n"
         f"Why they are here: \"{why}\"\n"
         f"What they wish to preserve: \"{community}\"\n\n"
-        "Extract ONE sentence from either response that:\n"
-        "- Comes directly from their words, not invented or paraphrased\n"
-        "- Is the most resonant or unexpected sentence\n"
-        "- Could float alone and still carry meaning\n"
-        "Return ONLY the sentence, exactly as written, no explanation."
+        "Weave ONE sentence that draws from both responses — take the most resonant phrase from each and join them naturally.\n"
+        "- Use only their actual words, no invented language\n"
+        "- The result should feel like it could float alone and carry meaning\n"
+        "- No explanation, no punctuation at the very end, no quotation marks"
     )
     try:
         return claude_call(prompt, max_tokens=150)

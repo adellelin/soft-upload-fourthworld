@@ -244,12 +244,10 @@ const SEED_FRAGMENTS = [
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function extractFragment(why, community) {
-  const text = (why + ' ' + community).trim();
-  const sentences = text.split(/[.,!?]+/).map(s => s.trim()).filter(s => s.length > 10);
-  const short = sentences.filter(s => s.split(' ').length <= 15);
-  const pool  = short.length ? short : sentences;
-  if (!pool.length) return text.split(' ').slice(0, 10).join(' ');
-  return pick(pool).toLowerCase();
+  const whyPhrase  = why.split(/[.,!?]+/)[0].trim().toLowerCase();
+  const commPhrase = community.split(/[.,!?]+/)[0].trim().toLowerCase();
+  if (whyPhrase && commPhrase) return `${whyPhrase} — ${commPhrase}`;
+  return (whyPhrase || commPhrase || (why + ' ' + community).trim().toLowerCase());
 }
 
 function getFragmentPool() {
