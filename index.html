@@ -494,6 +494,7 @@ function showResult(result) {
   RESULT_PAGES = buildResultPages(result);
   show('result');
   renderResultPage();
+  if (navigator.onLine) syncNow();
 }
 
 function resetAll() { show('intro'); }
