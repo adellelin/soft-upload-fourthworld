@@ -260,10 +260,13 @@ function getFragmentPool() {
 }
 
 function saveFragment(frag) {
+  if (!frag) return;
   try {
     const pool = JSON.parse(localStorage.getItem(STORAGE_FRAGMENTS) || '[]');
-    pool.push(frag);
-    localStorage.setItem(STORAGE_FRAGMENTS, JSON.stringify(pool));
+    if (!pool.includes(frag)) {
+      pool.push(frag);
+      localStorage.setItem(STORAGE_FRAGMENTS, JSON.stringify(pool));
+    }
   } catch {}
 }
 
@@ -285,17 +288,31 @@ function saveSession(answers, ritual, action, fragment, returned) {
   } catch {}
 }
 
-function generateResult(answers) {
+async function generateResult(answers) {
   const why       = answers[0] || 'an open question';
   const release   = answers[1] || 'what no longer serves you';
   const community = answers[2] || 'a world worth building';
   const template        = pick(RITUAL_TEMPLATES);
   const ritual_text     = template(why, release, community);
   const festival_action = pick(FESTIVAL_ACTIONS);
-  const pool              = getFragmentPool();
-  const returned_fragment = pick(pool);
-  const public_fragment   = extractFragment(why, community);
+  const public_fragment = extractFragment(why, community);
   saveFragment(public_fragment);
+
+  let returned_fragment;
+  if (navigator.onLine) {
+    try {
+      const res = await fetch(`${BACKEND_URL}/fragment`);
+      if (res.ok) {
+        const data = await res.json();
+        returned_fragment = data.fragment;
+        saveFragment(returned_fragment);
+      }
+    } catch {}
+  }
+  if (!returned_fragment) {
+    returned_fragment = pick(getFragmentPool());
+  }
+
   saveSession(answers, ritual_text, festival_action, public_fragment, returned_fragment);
   return { ritual_text, festival_action, returned_fragment };
 }
@@ -437,7 +454,7 @@ function nextQuestion() {
     ta.focus();
   } else {
     show('processing');
-    setTimeout(() => { showResult(generateResult(answers)); }, 2500);
+    setTimeout(async () => { showResult(await generateResult(answers)); }, 2500);
   }
 }
 
