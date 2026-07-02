@@ -351,12 +351,12 @@ async function syncNow() {
       banner.textContent = '✦ ALL SYNCED ✦';
       setTimeout(updateSyncBanner, 3000);
     } else {
-      banner.textContent = '✦ SYNC FAILED — WILL RETRY ✦';
-      setTimeout(updateSyncBanner, 3000);
+      banner.textContent = '✦ SYNC FAILED — RETRYING… ✦';
+      setTimeout(syncNow, 8000);
     }
   } catch {
-    banner.textContent = '✦ SYNC FAILED — SERVER UNREACHABLE ✦';
-    setTimeout(updateSyncBanner, 3000);
+    banner.textContent = '✦ SERVER WAKING UP — RETRYING… ✦';
+    setTimeout(syncNow, 8000);
   }
 }
 
