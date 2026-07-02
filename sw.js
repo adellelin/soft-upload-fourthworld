@@ -1,5 +1,5 @@
-const CACHE = 'fw-v1';
-const ASSETS = ['/'];
+const CACHE = 'fw-v2';
+const ASSETS = ['./'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
